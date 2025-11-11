@@ -366,15 +366,14 @@ async def gen_cover_img_svc(req: GenCoverImgReq, background: BackgroundTasks) ->
         sing_imgs_task = gen_gpt_4o_img_svc(img_urls=[SETTINGS.GEN_T_URL_SING, base_img],
                                             prompt=V_SING_IMAGE_PROMPT,
                                             scenario="sing")
-        figure_imgs_task = gemini_gen_img_svc(img_url=base_img,
-                                              prompt=V_FIGURE_IMAGE_PROMPT,
-                                              scenario="figure")
+        # figure_imgs_task = gemini_gen_img_svc(img_url=base_img,
+        #                                       prompt=V_FIGURE_IMAGE_PROMPT,
+        #                                       scenario="figure")
 
-        first_frame_imgs, dance_imgs, sing_imgs, figure_imgs = await asyncio.gather(
+        first_frame_imgs, dance_imgs, sing_imgs = await asyncio.gather(
             first_frame_imgs_task,
             dance_imgs_task,
             sing_imgs_task,
-            figure_imgs_task
         )
 
         cur_task = await aigc_task_get_by_id(task.task_id)
@@ -397,20 +396,20 @@ async def gen_cover_img_svc(req: GenCoverImgReq, background: BackgroundTasks) ->
         # if not sing_url:
         #     logging.info(f"M sing_url upload error")
 
-        figure_url = ""
-        if figure_imgs and figure_imgs.data:
-            # figure_url = await s3_upload_openai_img(figure_imgs.data[0])
-            figure_url = figure_imgs.data[0].url
-        if not figure_url:
-            logging.info(f"M figure_url upload error")
+        # figure_url = ""
+        # if figure_imgs and figure_imgs.data:
+        #     # figure_url = await s3_upload_openai_img(figure_imgs.data[0])
+        #     figure_url = figure_imgs.data[0].url
+        # if not figure_url:
+        #     logging.info(f"M figure_url upload error")
 
-        if first_frame_url and dance_url and sing_url and figure_url:
+        if first_frame_url and dance_url and sing_url:
             cur_task.cover.output = GenCoverResp(
                 first_frame_img_url=first_frame_url,
                 cover_img_url=first_frame_url,
                 dance_first_frame_img_url=dance_url,
                 sing_first_frame_img_url=sing_url,
-                figure_first_frame_img_url=figure_url,
+                figure_first_frame_img_url="xxx",
             )
 
             fee = Fee.total_fee([
