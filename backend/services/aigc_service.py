@@ -331,7 +331,7 @@ async def gen_cover_img_svc(req: GenCoverImgReq, background: BackgroundTasks) ->
     await aigc_task_save(task)
 
     async def _task_gen_cover_img_svc():
-        logging.info(f"M begin")
+        logging.info(f"M begin _task_gen_cover_img_svc")
 
         if not task.slogan:
             slogan_retry = 10
@@ -345,10 +345,11 @@ async def gen_cover_img_svc(req: GenCoverImgReq, background: BackgroundTasks) ->
                     if match:
                         json_str = match.group(0)
                         data = json.loads(json_str)
-                        if "slogan" in data:
-                            task.slogan = data["slogan"]
-                        if "description" in data:
-                            task.slogan_description = data["description"]
+                        if "slogan" in data and "description" in data:
+                            curc_task = await aigc_task_get_by_id(task.task_id)
+                            curc_task.slogan = data["slogan"]
+                            curc_task.slogan_description = data["description"]
+                            await aigc_task_save(curc_task)
                         break
                 except Exception as e:
                     slogan_retry -= 1
