@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     OPENAI_IMAGE_API_KEY = ""
     PROXY_OPENAI_API_KEY = ""
     PROXY_OPENAI_BASE_URL = ""
+    PROXY_GROK_API_KEY = ""
+    PROXY_GROK_BASE_URL = ""
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     REDIS_PASSWORD: str = None

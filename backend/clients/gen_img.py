@@ -62,8 +62,8 @@ async def gen_gpt_4o_img_svc(img_urls: list[str], prompt: str, scenario: str = "
 
 
 client = AsyncOpenAI(
-    api_key=SETTINGS.PROXY_OPENAI_API_KEY,
-    base_url=SETTINGS.PROXY_OPENAI_BASE_URL
+    api_key=SETTINGS.PROXY_GROK_API_KEY,
+    base_url=SETTINGS.PROXY_GROK_BASE_URL
 )
 
 
