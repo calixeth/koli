@@ -1,11 +1,13 @@
 import logging
 import os
+import time
 from contextlib import asynccontextmanager
 
 import fastapi
 import uvicorn
 from agents import set_default_openai_key
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import ORJSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from starlette.responses import JSONResponse
@@ -71,6 +73,44 @@ async def default_exception_handler(request: fastapi.Request, exc: Exception):
     if tid:
         resp.headers["X-Trace-Id"] = tid
     return resp
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+
+    body_bytes = await request.body()
+    body_str = body_bytes.decode("utf-8") if body_bytes else ""
+
+    logger.info(f"➡️  {request.method} {request.url}")
+    if body_str:
+        logger.info(f"🧾  Request body: {body_str}")
+
+    try:
+        response = await call_next(request)
+    except Exception as e:
+        logger.exception(f"❌ Exception while handling request: {e}")
+        raise
+
+    process_time = (time.time() - start_time) * 1000
+    logger.info(f"⬅️  {request.method} {request.url} "
+                f"completed in {process_time:.2f}ms "
+                f"status={response.status_code}")
+    return response
+
+
+# ---- 捕获 422 验证错误 ----
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    body = await request.body()
+    logger.error("⚠️ Validation error on %s", request.url)
+    logger.error("Request body: %s", body.decode("utf-8") if body else "<empty>")
+    logger.error("Details: %s", exc.errors())
+
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors()},
+    )
 
 
 if __name__ == '__main__':
