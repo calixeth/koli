@@ -345,6 +345,7 @@ async def gen_cover_img_svc(req: GenCoverImgReq, background: BackgroundTasks) ->
                     if match:
                         json_str = match.group(0)
                         data = json.loads(json_str)
+                        logging.info(f"gen slogan result {text}")
                         if "slogan" in data and "description" in data:
                             curc_task = await aigc_task_get_by_id(task.task_id)
                             curc_task.slogan = data["slogan"]
