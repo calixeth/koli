@@ -81,7 +81,7 @@ async def log_requests(request: Request, call_next):
 
     start_time = time.time()
 
-    if not "health" in path and not "/upload_file" in path:
+    if not "health" in path and not "upload_file" in path:
         body_bytes = await request.body()
         body_str = body_bytes.decode("utf-8") if body_bytes else ""
 
