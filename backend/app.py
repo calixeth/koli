@@ -77,14 +77,17 @@ async def default_exception_handler(request: fastapi.Request, exc: Exception):
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
+    path = request.url.path
+
     start_time = time.time()
 
-    body_bytes = await request.body()
-    body_str = body_bytes.decode("utf-8") if body_bytes else ""
+    if not "health" in path and not "/upload_file" in path:
+        body_bytes = await request.body()
+        body_str = body_bytes.decode("utf-8") if body_bytes else ""
 
-    logger.info(f"➡️  {request.method} {request.url}")
-    if body_str:
-        logger.info(f"🧾  Request body: {body_str}")
+        logger.info(f"➡️  {request.method} {request.url}")
+        if body_str:
+            logger.info(f"🧾  Request body: {body_str}")
 
     try:
         response = await call_next(request)
