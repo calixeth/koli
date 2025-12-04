@@ -12,10 +12,10 @@ from config import SETTINGS
 from entities.bo import LoginRequest, WalletLoginRequest
 from entities.dto import LoginResponse, NonceResponse, WalletLoginResponse, TokenResponse
 from entities.enums import ChainType
-from utils.jwt_utils import generate_token_pair, verify_refresh_token
-from infra.redis_cache import REDIS
-from utils.web3_utils import generate_nonce, get_message_to_sign, verify_signature
 from infra.db import users_col
+from infra.redis_cache import REDIS
+from utils.jwt_utils import generate_token_pair, verify_refresh_token
+from utils.web3_utils import generate_nonce, get_message_to_sign, verify_signature
 
 logger = logging.getLogger(__name__)
 
@@ -202,7 +202,7 @@ async def wallet_login(request: WalletLoginRequest) -> WalletLoginResponse:
             },
             "is_new_user": is_new_user,
             "access_token_expires_in": SETTINGS.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # convert to seconds
-            "refresh_token_expires_in":  SETTINGS.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60  # convert to seconds
+            "refresh_token_expires_in": SETTINGS.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60  # convert to seconds
         }
 
     except Exception as e:
@@ -210,7 +210,8 @@ async def wallet_login(request: WalletLoginRequest) -> WalletLoginResponse:
         raise e
 
 
-async def get_or_create_wallet_user(wallet_address: str, chain_type: Union[ChainType, str] = ChainType.ETHEREUM) -> dict:
+async def get_or_create_wallet_user(wallet_address: str,
+                                    chain_type: Union[ChainType, str] = ChainType.ETHEREUM) -> dict:
     """
     Get existing user by wallet address or create a new one
     
@@ -225,10 +226,10 @@ async def get_or_create_wallet_user(wallet_address: str, chain_type: Union[Chain
         except ValueError:
             logger.warning(f"Unsupported chain type: {chain_type}, using default: {ChainType.ETHEREUM}")
             chain_type = ChainType.ETHEREUM
-    
+
     # Convert enum to string for database storage
     chain_type_str = chain_type.value
-    
+
     # Check if user exists
     user = await users_col.find_one({"wallet_address": wallet_address})
 
@@ -274,12 +275,12 @@ async def refresh_token(refresh_token: str) -> TokenResponse:
     user_id = verify_refresh_token(refresh_token)
     if not user_id:
         raise CustomAgentException(message="Invalid or expired refresh token")
-    
+
     # Get user info
     user = await users_col.find_one({"_id": ObjectId(user_id)})
     if not user:
         raise CustomAgentException(message="User not found")
-    
+
     # Generate new token pair
     access_token, new_refresh_token = generate_token_pair(
         user_id=str(user["_id"]),
@@ -287,7 +288,7 @@ async def refresh_token(refresh_token: str) -> TokenResponse:
         tenant_id=user.get("tenant_id"),
         wallet_address=user.get("wallet_address")
     )
-    
+
     return {
         "access_token": access_token,
         "refresh_token": new_refresh_token,
@@ -301,4 +302,3 @@ async def refresh_token(refresh_token: str) -> TokenResponse:
             'email': user.get("email")
         }
     }
-

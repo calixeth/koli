@@ -63,13 +63,13 @@ async def veo3_gen_video_svc_v3(img_url: str, prompt: str) -> GenVideoResp | Non
     return None
 
 
-async def gen_img_svc_v3(img_url: str, prompt: str) -> str | None:
+async def gen_img_svc_v3(img_urls: list[str], prompt: str) -> str | None:
     try:
         handler = await fal_client.submit_async(
-            SETTINGS.IMAGE_TO_VIDEO_V3,
+            SETTINGS.IMAGE_TO_IMAGE_V3,
             arguments={
                 "prompt": prompt,
-                "image_url": img_url,
+                "image_urls": img_urls,
             },
         )
 

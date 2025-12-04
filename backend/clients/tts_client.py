@@ -1,41 +1,40 @@
 import base64
-import io
 import logging
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, Any
+from typing import Optional
 
 import aiohttp
-import openai
 import fal_client
+import openai
 
 from config import SETTINGS
 
 
 class BaseTTSClient(ABC):
     """Abstract base class for TTS clients"""
-    
+
     @abstractmethod
     async def text_to_speech(
-        self,
-        text: str,
-        voice: str = "alloy",
-        model: str = "tts-1",
-        response_format: str = "mp3",
-        speed: float = 1.0,
-        **kwargs
+            self,
+            text: str,
+            voice: str = "alloy",
+            model: str = "tts-1",
+            response_format: str = "mp3",
+            speed: float = 1.0,
+            **kwargs
     ) -> Optional[bytes]:
         """Convert text to speech"""
         pass
-    
+
     @abstractmethod
     async def text_to_speech_base64(
-        self,
-        text: str,
-        voice: str = "alloy",
-        model: str = "tts-1",
-        response_format: str = "mp3",
-        speed: float = 1.0,
-        **kwargs
+            self,
+            text: str,
+            voice: str = "alloy",
+            model: str = "tts-1",
+            response_format: str = "mp3",
+            speed: float = 1.0,
+            **kwargs
     ) -> Optional[str]:
         """Convert text to speech and return as base64"""
         pass
@@ -43,20 +42,20 @@ class BaseTTSClient(ABC):
 
 class OpenAITTSClient(BaseTTSClient):
     """OpenAI TTS client implementation"""
-    
+
     def __init__(self):
         self.client = openai.AsyncClient(
             api_key=SETTINGS.OPENAI_API_KEY,
         )
-    
+
     async def text_to_speech(
-        self,
-        text: str,
-        voice: str = "alloy",
-        model: str = "tts-1",
-        response_format: str = "mp3",
-        speed: float = 1.0,
-        **kwargs
+            self,
+            text: str,
+            voice: str = "alloy",
+            model: str = "tts-1",
+            response_format: str = "mp3",
+            speed: float = 1.0,
+            **kwargs
     ) -> Optional[bytes]:
         """
         Convert text to speech using OpenAI's TTS API
@@ -74,7 +73,7 @@ class OpenAITTSClient(BaseTTSClient):
         """
         try:
             logging.info(f"M Converting text to speech with OpenAI: {text[:50]}...")
-            
+
             # Create arguments dict for OpenAI API call
             api_args = {
                 "model": model,
@@ -83,7 +82,7 @@ class OpenAITTSClient(BaseTTSClient):
                 "response_format": response_format,
                 "speed": speed
             }
-            
+
             # Add any additional parameters that OpenAI might support
             # Note: OpenAI TTS doesn't support voice_id or audio_url, but we keep the interface flexible
             for key, value in kwargs.items():
@@ -91,9 +90,9 @@ class OpenAITTSClient(BaseTTSClient):
                     logging.info(f"OpenAI TTS doesn't support {key}, ignoring: {value}")
                 else:
                     api_args[key] = value
-            
+
             response = await self.client.audio.speech.create(**api_args)
-            
+
             if response:
                 audio_data = response.content
                 logging.info(f"M OpenAI TTS conversion successful, audio size: {len(audio_data)} bytes")
@@ -101,19 +100,19 @@ class OpenAITTSClient(BaseTTSClient):
             else:
                 logging.error("M OpenAI TTS conversion failed: no response")
                 return None
-                
+
         except Exception as e:
             logging.error(f"M OpenAI TTS conversion error: {e}", exc_info=True)
             return None
-    
+
     async def text_to_speech_base64(
-        self,
-        text: str,
-        voice: str = "alloy",
-        model: str = "tts-1",
-        response_format: str = "mp3",
-        speed: float = 1.0,
-        **kwargs
+            self,
+            text: str,
+            voice: str = "alloy",
+            model: str = "tts-1",
+            response_format: str = "mp3",
+            speed: float = 1.0,
+            **kwargs
     ) -> Optional[str]:
         """
         Convert text to speech and return as base64 encoded string
@@ -143,18 +142,18 @@ class OpenAITTSClient(BaseTTSClient):
 
 class VoiceCloneTTSClient(BaseTTSClient):
     """Voice cloning TTS client implementation"""
-    
+
     def __init__(self):
         pass
-    
+
     async def text_to_speech(
-        self,
-        text: str,
-        voice: str = "alloy",  # This will be ignored for voice clone, using cloned voice
-        model: str = "speech-02-hd",  # Voice clone model options
-        response_format: str = "mp3",
-        speed: float = 1.0,
-        **kwargs
+            self,
+            text: str,
+            voice: str = "alloy",  # This will be ignored for voice clone, using cloned voice
+            model: str = "speech-02-hd",  # Voice clone model options
+            response_format: str = "mp3",
+            speed: float = 1.0,
+            **kwargs
     ) -> Optional[bytes]:
         """
         Convert text to speech using voice cloning API
@@ -207,19 +206,19 @@ class VoiceCloneTTSClient(BaseTTSClient):
                             audio_data = await audio_response.read()
                             logging.info(f"Voice clone TTS conversion successful, audio size: {len(audio_data)} bytes")
                             return audio_data
-                    
+
         except Exception as e:
             logging.error(f"Voice clone TTS conversion error: {e}", exc_info=True)
             return None
-    
+
     async def text_to_speech_base64(
-        self,
-        text: str,
-        voice: str = "alloy",
-        model: str = "speech-02-hd",
-        response_format: str = "mp3",
-        speed: float = 1.0,
-        **kwargs
+            self,
+            text: str,
+            voice: str = "alloy",
+            model: str = "speech-02-hd",
+            response_format: str = "mp3",
+            speed: float = 1.0,
+            **kwargs
     ) -> Optional[str]:
         """
         Convert text to speech and return as base64 encoded string
@@ -249,12 +248,12 @@ class VoiceCloneTTSClient(BaseTTSClient):
 
 class TTSClientFactory:
     """Factory class to create TTS clients based on configuration"""
-    
+
     @staticmethod
     def create_client() -> BaseTTSClient:
         """Create TTS client based on TTS_PROVIDER environment variable"""
         provider = SETTINGS.TTS_PROVIDER.lower()
-        
+
         if provider == "voice_clone":
             if not SETTINGS.FA_KEY:
                 logging.warning("VOICE_CLONE_API_KEY not set, falling back to OpenAI")
@@ -272,41 +271,41 @@ class TTSClientFactory:
 
 class TTSClient:
     """Main TTS client that delegates to the appropriate provider"""
-    
+
     def __init__(self):
         self._client = TTSClientFactory.create_client()
-    
+
     async def text_to_speech(
-        self,
-        text: str,
-        voice: str = None,
-        model: str = None,
-        response_format: str = None,
-        speed: float = 1.0,
-        **kwargs
+            self,
+            text: str,
+            voice: str = None,
+            model: str = None,
+            response_format: str = None,
+            speed: float = 1.0,
+            **kwargs
     ) -> Optional[bytes]:
         """Delegate to the appropriate TTS client"""
         return await self._client.text_to_speech(text, voice, model, response_format, speed, **kwargs)
-    
+
     async def text_to_speech_base64(
-        self,
-        text: str,
-        voice: str = None,
-        model: str = None,
-        response_format: str = None,
-        speed: float = 1.0,
-        **kwargs
+            self,
+            text: str,
+            voice: str = None,
+            model: str = None,
+            response_format: str = None,
+            speed: float = 1.0,
+            **kwargs
     ) -> Optional[str]:
         """Delegate to the appropriate TTS client"""
         return await self._client.text_to_speech_base64(text, voice, model, response_format, speed, **kwargs)
 
     async def call_language_model(
-        self,
-        prompt: str,
-        model: str = "gpt-4o",
-        max_tokens: int = 10000,
-        temperature: float = 0.7,
-        system_message: Optional[str] = None
+            self,
+            prompt: str,
+            model: str = "gpt-4o",
+            max_tokens: int = 10000,
+            temperature: float = 0.7,
+            system_message: Optional[str] = None
     ) -> Optional[str]:
         """
         Call language model with prompt and optional parameters
@@ -323,22 +322,22 @@ class TTSClient:
         """
         try:
             logging.info(f"Calling language model {model} with prompt: {prompt[:50]}...")
-            
+
             # For language model calls, we still use OpenAI
             client = openai.AsyncClient(api_key=SETTINGS.OPENAI_API_KEY)
-            
+
             messages = []
             if system_message:
                 messages.append({"role": "system", "content": system_message})
             messages.append({"role": "user", "content": prompt})
-            
+
             response = await client.chat.completions.create(
                 model=model,
                 messages=messages,
                 max_tokens=max_tokens,
                 temperature=temperature
             )
-            
+
             if response and response.choices:
                 generated_text = response.choices[0].message.content
                 logging.info(f"Language model response successful, length: {len(generated_text)}")
@@ -346,19 +345,19 @@ class TTSClient:
             else:
                 logging.error("Language model call failed: no response")
                 return None
-                
+
         except Exception as e:
             logging.error(f"Language model call error: {e}", exc_info=True)
             return None
 
     async def call_language_model_with_audio(
-        self,
-        prompt: str,
-        audio_data: bytes,
-        model: str = "gpt-4o",
-        max_tokens: int = 10000,
-        temperature: float = 0.7,
-        system_message: Optional[str] = None
+            self,
+            prompt: str,
+            audio_data: bytes,
+            model: str = "gpt-4o",
+            max_tokens: int = 10000,
+            temperature: float = 0.7,
+            system_message: Optional[str] = None
     ) -> Optional[str]:
         """
         Call language model with prompt and audio input
@@ -376,14 +375,14 @@ class TTSClient:
         """
         try:
             logging.info(f"Calling language model {model} with audio input, prompt: {prompt[:50]}...")
-            
+
             # For language model calls with audio, we still use OpenAI
             client = openai.AsyncClient(api_key=SETTINGS.OPENAI_API_KEY)
-            
+
             messages = []
             if system_message:
                 messages.append({"role": "system", "content": system_message})
-            
+
             # Add audio message
             audio_base64 = base64.b64encode(audio_data).decode('utf-8')
             messages.append({
@@ -399,14 +398,14 @@ class TTSClient:
                     }
                 ]
             })
-            
+
             response = await client.chat.completions.create(
                 model=model,
                 messages=messages,
                 max_tokens=max_tokens,
                 temperature=temperature
             )
-            
+
             if response and response.choices:
                 generated_text = response.choices[0].message.content
                 logging.info(f"Language model with audio response successful, length: {len(generated_text)}")
@@ -414,7 +413,7 @@ class TTSClient:
             else:
                 logging.error("Language model with audio call failed: no response")
                 return None
-                
+
         except Exception as e:
             logging.error(f"Language model with audio call error: {e}", exc_info=True)
             return None
@@ -425,12 +424,12 @@ tts_client = TTSClient()
 
 
 async def text_to_speech_svc(
-    text: str,
-    voice: str = None,
-    model: str = None,
-    response_format: str = None,
-    speed: float = 1.0,
-    **kwargs
+        text: str,
+        voice: str = None,
+        model: str = None,
+        response_format: str = None,
+        speed: float = 1.0,
+        **kwargs
 ) -> Optional[bytes]:
     """
     Service function for text-to-speech conversion
@@ -450,12 +449,12 @@ async def text_to_speech_svc(
 
 
 async def text_to_speech_base64_svc(
-    text: str,
-    voice: str = None,
-    model: str = None,
-    response_format: str = None,
-    speed: float = 1.0,
-    **kwargs
+        text: str,
+        voice: str = None,
+        model: str = None,
+        response_format: str = None,
+        speed: float = 1.0,
+        **kwargs
 ) -> Optional[str]:
     """
     Service function for text-to-speech conversion returning base64
@@ -475,11 +474,11 @@ async def text_to_speech_base64_svc(
 
 
 async def call_model(
-    prompt: str,
-    model: str = "gpt-4o",
-    max_tokens: int = 15000,
-    temperature: float = 0.7,
-    system_message: Optional[str] = None
+        prompt: str,
+        model: str = "gpt-4o",
+        max_tokens: int = 15000,
+        temperature: float = 0.7,
+        system_message: Optional[str] = None
 ) -> Optional[str]:
     """
     Service function for language model calls
@@ -498,12 +497,12 @@ async def call_model(
 
 
 async def call_model_with_audio(
-    prompt: str,
-    audio_data: bytes,
-    model: str = "gpt-4o",
-    max_tokens: int = 15000,
-    temperature: float = 0.7,
-    system_message: Optional[str] = None
+        prompt: str,
+        audio_data: bytes,
+        model: str = "gpt-4o",
+        max_tokens: int = 15000,
+        temperature: float = 0.7,
+        system_message: Optional[str] = None
 ) -> Optional[str]:
     """
     Service function for language model calls with audio input
@@ -519,4 +518,5 @@ async def call_model_with_audio(
     Returns:
         Generated text response, or None if failed
     """
-    return await tts_client.call_language_model_with_audio(prompt, audio_data, model, max_tokens, temperature, system_message) 
+    return await tts_client.call_language_model_with_audio(prompt, audio_data, model, max_tokens, temperature,
+                                                           system_message)

@@ -1,7 +1,4 @@
 import logging
-from typing import Optional
-
-import aiohttp
 
 from config import SETTINGS
 
@@ -13,7 +10,6 @@ headers = {
     f"x-{SETTINGS.TWITTER241}-host": SETTINGS.TWITTER241_HOST,
     f"x-{SETTINGS.TWITTER241}-key": SETTINGS.TWITTER241_KEY
 }
-
 
 # async def twitter_fetch_user(username: str):
 #     url = f"{host}/user?username={username}"

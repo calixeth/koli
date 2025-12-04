@@ -7,12 +7,11 @@ import uuid
 
 from fastapi import BackgroundTasks
 
-from agent.prompt.aigc import FIRST_FRAME_IMG_PROMPT, V_DANCE_IMAGE_PROMPT, V_SING_IMAGE_PROMPT, V_FIGURE_IMAGE_PROMPT, \
+from agent.prompt.aigc import FIRST_FRAME_IMG_PROMPT, V_DANCE_IMAGE_PROMPT, V_FIGURE_IMAGE_PROMPT, \
     V_DANCE_VIDEO_PROMPT, V_TURN_PROMPT, V_SPEECH_PROMPT, V_THINK_PROMPT, V_SING_VIDEO_PROMPT, V_DEFAULT_PROMPT
 from agent.prompt.tts import SLOGAN_PROMPT
-from clients.gen_fal_client import veo3_gen_video_svc_v2
-from clients.gen_img import gen_gpt_4o_img_svc, gen_text
-from clients.openai_gen_img import gemini_gen_img_svc
+from clients.gen_fal_client import veo3_gen_video_svc_v2, gen_img_svc_v3
+from clients.gen_img import gen_text
 from common.error import raise_error
 from config import SETTINGS
 from entities.dto import GenCoverImgReq, AIGCTask, Cover, TaskStatus, GenVideoReq, Video, DigitalHuman, \
@@ -359,15 +358,21 @@ async def gen_cover_img_svc(req: GenCoverImgReq, background: BackgroundTasks) ->
         base_img = req.img_url
         if not base_img:
             base_img = twitter_bo.avatar_url_400x400
-        first_frame_imgs_task = gen_gpt_4o_img_svc(img_urls=[base_img],
-                                                   prompt=FIRST_FRAME_IMG_PROMPT.format(style=style),
-                                                   scenario="first_frame")
-        dance_imgs_task = gen_gpt_4o_img_svc(img_urls=[SETTINGS.GEN_T_URL_DANCE, base_img],
-                                             prompt=V_DANCE_IMAGE_PROMPT,
-                                             scenario="dance")
-        sing_imgs_task = gen_gpt_4o_img_svc(img_urls=[SETTINGS.GEN_T_URL_SING, base_img],
-                                            prompt=V_SING_IMAGE_PROMPT,
-                                            scenario="sing")
+        # first_frame_imgs_task = gen_gpt_4o_img_svc(img_urls=[base_img],
+        #                                            prompt=FIRST_FRAME_IMG_PROMPT.format(style=style),
+        #                                            scenario="first_frame")
+        # dance_imgs_task = gen_gpt_4o_img_svc(img_urls=[SETTINGS.GEN_T_URL_DANCE, base_img],
+        #                                      prompt=V_DANCE_IMAGE_PROMPT,
+        #                                      scenario="dance")
+        # sing_imgs_task = gen_gpt_4o_img_svc(img_urls=[SETTINGS.GEN_T_URL_SING, base_img],
+        #                                     prompt=V_SING_IMAGE_PROMPT,
+        #                                     scenario="sing")
+
+        first_frame_imgs_task = gen_img_svc_v3(img_urls=[base_img],
+                                               prompt=FIRST_FRAME_IMG_PROMPT.format(style=style))
+        dance_imgs_task = gen_img_svc_v3(img_urls=[SETTINGS.GEN_T_URL_DANCE, base_img],
+                                         prompt=V_DANCE_IMAGE_PROMPT)
+        sing_imgs_task = gen_img_svc_v3(img_urls=[SETTINGS.GEN_T_URL_SING, base_img])
         # figure_imgs_task = gemini_gen_img_svc(img_url=base_img,
         #                                       prompt=V_FIGURE_IMAGE_PROMPT,
         #                                       scenario="figure")

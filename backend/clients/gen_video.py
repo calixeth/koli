@@ -3,11 +3,10 @@ import logging
 import re
 
 import aiohttp
-import requests
 
 from config import SETTINGS
 from entities.dto import GenVideoResp
-from infra.file import download_and_upload_url, img_url_to_base64
+from infra.file import img_url_to_base64
 
 task_id_pattern = re.compile(r"Task ID: `([^`]+)`")
 watch_pattern = re.compile(r"\[▶️ Watch Online\]\(([^)]+)\)")
